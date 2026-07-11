@@ -1,15 +1,11 @@
 import { NextResponse } from "next/server";
-import { demoMemory } from "@/lib/demo-data";
-import { isDemoMode } from "@/lib/env";
+import { retrieveRelevantMemories } from "@/lib/everos";
 
-export async function GET() {
-  if (isDemoMode()) {
-    return NextResponse.json(demoMemory);
-  }
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const studentId = url.searchParams.get("studentId") ?? "demo-student";
+  const query = url.searchParams.get("query") ?? "student learning profile";
+  const memory = await retrieveRelevantMemories(studentId, query);
 
-  return NextResponse.json({
-    ...demoMemory,
-    demoMode: true,
-    warning: "EverOS adapter is ready for credentials; returning demo memory until configured."
-  });
+  return NextResponse.json(memory);
 }

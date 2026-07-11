@@ -1,19 +1,21 @@
 import { NextResponse } from "next/server";
 import { demoAnalysis } from "@/lib/demo-data";
-import { isDemoMode } from "@/lib/env";
+import { hasGemini } from "@/lib/env";
+import { saveScan } from "@/lib/butterbase";
 import { analysisSchema } from "@/lib/validators";
 import type { PageAnalysis } from "@/lib/types";
 
 export async function POST(request: Request) {
-  const demoMode = isDemoMode();
-
-  if (demoMode) {
-    return NextResponse.json({ ...demoAnalysis, demoMode });
-  }
-
   try {
     const formData = await request.formData();
     const image = formData.get("image");
+    const studentId = String(formData.get("studentId") ?? "demo-student");
+
+    if (!hasGemini()) {
+      await saveScan({ studentId, analysis: demoAnalysis, imageName: image instanceof File ? image.name : undefined });
+      return NextResponse.json({ ...demoAnalysis, demoMode: true });
+    }
+
     const prompt = [
       "Analyze this STEM textbook page.",
       "Return strict JSON with subject, topic, learningObjective, modelId, confidence, keyConcepts, openingQuestion.",
@@ -63,6 +65,7 @@ export async function POST(request: Request) {
     }
 
     const result: PageAnalysis = { ...parsed.data, demoMode: false } as PageAnalysis;
+    await saveScan({ studentId, analysis: result, imageName: image instanceof File ? image.name : undefined });
     return NextResponse.json(result);
   } catch {
     return NextResponse.json({ ...demoAnalysis, demoMode: true, warning: "Analysis failed; using demo analysis." });

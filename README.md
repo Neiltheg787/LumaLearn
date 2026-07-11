@@ -41,6 +41,46 @@ BUTTERBASE_PROJECT_ID=
 
 Do not prefix private keys with `VITE_` or `NEXT_PUBLIC_`. The browser only calls local `/api/*` routes; external services are contacted by server-side route handlers.
 
+Optional provider hosts may be set if your EverOS or Butterbase dashboard gives a project-specific API URL:
+
+```bash
+EVEROS_API_BASE_URL=
+BUTTERBASE_API_BASE_URL=
+```
+
+## EverOS memory
+
+EverOS is used as the long-term student memory layer. The server-only adapter in `lib/everos.ts` exposes:
+
+- `createStudentMemory()`
+- `retrieveRelevantMemories()`
+- `saveLessonMemory()`
+- `updateMasteryMemory()`
+
+When a lesson starts, `/api/tutor/respond` retrieves relevant EverOS memories and injects a memory summary into the Gemini tutoring prompt. Lesson completion and mastery updates write back to EverOS. If EverOS is unavailable, tutoring continues with no crash and the UI uses cached memory context.
+
+## Butterbase backend
+
+Butterbase is the primary persistent backend. The server-only adapter in `lib/butterbase.ts` manages:
+
+- `Students`
+- `Lessons`
+- `Progress`
+- `QuizAttempts`
+- `Scans`
+- `Achievements`
+- `Leaderboard`
+
+The frontend never calls Butterbase directly. It reads dashboard data from `/api/dashboard`, writes scans via `/api/analyze-page`, writes progress via `/api/progress/update`, and completes lessons through `/api/lesson/complete`.
+
+After adding Butterbase environment variables, run this once to create or verify the expected collections:
+
+```bash
+curl -X POST https://YOUR_VERCEL_DOMAIN/api/butterbase/setup
+```
+
+If Butterbase is unavailable, `/api/dashboard` returns cached demo data with a fallback warning instead of leaving the app blank.
+
 ## Demo Mode
 
 If any external credential is missing, LumaLearn shows a Demo Mode badge and returns structured fallback data. The heart lesson remains fully demoable:
@@ -75,10 +115,13 @@ Camera access requires HTTPS in production. Vercel provides HTTPS automatically.
 
 ## Troubleshooting API routes
 
-- `/api/analyze-page`: returns Gemini analysis when `GEMINI_API_KEY` is set; otherwise returns heart demo analysis.
-- `/api/tutor/respond`: evaluates answers server-side and returns a Socratic response.
-- `/api/memory/retrieve` and `/api/memory/save`: provide the EverOS/Butterbase integration surface and demo responses until credentials are configured.
-- `/api/progress/update`: calculates mastery deterministically without relying on an LLM-generated score.
+- `/api/dashboard`: reads student streaks, points, mastery, scans, recommendations, and lessons from Butterbase with cached fallback.
+- `/api/analyze-page`: returns Gemini analysis when `GEMINI_API_KEY` is set and stores scan metadata in Butterbase.
+- `/api/tutor/respond`: retrieves EverOS memory, injects it into Gemini context, evaluates answers server-side, and falls back safely.
+- `/api/memory/retrieve` and `/api/memory/save`: read and write EverOS student memories.
+- `/api/progress/update`: calculates mastery deterministically, saves progress to Butterbase, and records mastery changes in EverOS.
+- `/api/lesson/complete`: persists completed lesson, quiz attempt, achievement, leaderboard update, and EverOS lesson memory.
+- `/api/butterbase/setup`: creates or verifies Butterbase collections server-side.
 
 If an API route fails in production, confirm the environment variables are present in Vercel and redeploy. Never place private keys in browser-visible variables.
 

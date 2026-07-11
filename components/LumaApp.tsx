@@ -20,9 +20,9 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import React from "react";
 import QRCode from "qrcode";
-import { dashboard, demoAnalysis, demoMemory } from "@/lib/demo-data";
+import { dashboard as fallbackDashboard, demoAnalysis, demoMemory } from "@/lib/demo-data";
 import { MODEL_LIBRARY } from "@/lib/models";
-import type { LessonProgress, PageAnalysis, StudentMemory, TutorResponse } from "@/lib/types";
+import type { DashboardData, LessonProgress, PageAnalysis, StudentMemory, TutorResponse } from "@/lib/types";
 
 type View = "dashboard" | "scan" | "lessons" | "progress" | "library" | "profile";
 
@@ -46,11 +46,13 @@ function viewFromPath(pathname: string): View {
   return "dashboard";
 }
 
-function DemoModeBadge() {
+function DemoModeBadge({ show = true }: { show?: boolean }) {
+  if (!show) return null;
+
   return (
     <span className="pill demo-pill">
       <Sparkles size={15} />
-      Demo Mode
+      Cached Fallback
     </span>
   );
 }
@@ -107,27 +109,49 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Topbar({ title, subtitle }: { title: string; subtitle: string }) {
+function Topbar({ title, subtitle, demoMode = true }: { title: string; subtitle: string; demoMode?: boolean }) {
   return (
     <header className="topbar">
       <div>
         <h1>{title}</h1>
         <p className="muted">{subtitle}</p>
       </div>
-      <DemoModeBadge />
+      <DemoModeBadge show={demoMode} />
     </header>
   );
 }
 
 function Dashboard() {
+  const [data, setData] = useState<DashboardData>(fallbackDashboard);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadDashboard() {
+      try {
+        const response = await fetch("/api/dashboard?studentId=demo-student");
+        const nextData: DashboardData = await response.json();
+        if (!cancelled) setData(nextData);
+      } catch {
+        if (!cancelled) setData({ ...fallbackDashboard, warning: "Butterbase unavailable; using cached demo data." });
+      }
+    }
+
+    loadDashboard();
+    window.addEventListener("lumalearn:dashboard-refresh", loadDashboard);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("lumalearn:dashboard-refresh", loadDashboard);
+    };
+  }, []);
+
   return (
     <Shell>
-      <Topbar title={`Good afternoon, ${dashboard.studentName}`} subtitle="Continue your visual STEM learning path." />
+      <Topbar title={`Good afternoon, ${data.studentName}`} subtitle="Continue your visual STEM learning path." demoMode={data.demoMode} />
       <div className="content-grid">
         <section className="stack">
           <div className="card">
             <div className="eyebrow">Continue learning</div>
-            <h2>Human Heart: blood flow in motion</h2>
+            <h2>{data.recommendations[0]}</h2>
             <p className="muted">Use the beating heart model to explain where deoxygenated blood enters first.</p>
             <div className="btn-row">
               <Link className="button accent" href="/scan">
@@ -143,21 +167,21 @@ function Dashboard() {
           <div className="cards">
             <div className="card compact">
               <span className="eyebrow">Streak</span>
-              <p className="metric">{dashboard.streak} days</p>
+              <p className="metric">{data.streak} days</p>
             </div>
             <div className="card compact">
               <span className="eyebrow">Total points</span>
-              <p className="metric">{dashboard.points.toLocaleString()}</p>
+              <p className="metric">{data.points.toLocaleString()}</p>
             </div>
             <div className="card compact">
-              <span className="eyebrow">Mastery</span>
-              <p className="metric">68%</p>
+              <span className="eyebrow">Lessons</span>
+              <p className="metric">{data.lessonsCompleted}</p>
             </div>
           </div>
           <div className="card">
             <h2 className="section-title">Weekly activity</h2>
             <div className="activity" aria-label="Weekly activity chart">
-              {dashboard.weeklyActivity.map((value, index) => (
+              {data.weeklyActivity.map((value, index) => (
                 <span key={index} style={{ height: `${value}%` }} title={`${value} activity points`} />
               ))}
             </div>
@@ -165,7 +189,7 @@ function Dashboard() {
           <div className="card">
             <h2 className="section-title">Recent AR lessons</h2>
             <div className="lesson-list">
-              {dashboard.recentLessons.map((lesson) => (
+              {data.recentLessons.map((lesson) => (
                 <div className="lesson-row" key={lesson.title}>
                   <div>
                     <strong>{lesson.title}</strong>
@@ -180,7 +204,7 @@ function Dashboard() {
         <aside className="stack">
           <div className="card">
             <h2 className="section-title">Subject mastery</h2>
-            {Object.entries(demoMemory.mastery).map(([subject, value]) => (
+            {Object.entries(data.mastery).map(([subject, value]) => (
               <div key={subject} style={{ marginBottom: 14 }}>
                 <div className="lesson-row" style={{ border: 0, padding: 0, background: "transparent" }}>
                   <strong>{subject}</strong>
@@ -195,7 +219,7 @@ function Dashboard() {
           <div className="card">
             <h2 className="section-title">Saved textbook scans</h2>
             <div className="lesson-list">
-              {dashboard.savedScans.map((scan) => (
+              {data.savedScans.map((scan) => (
                 <div className="lesson-row" key={scan}>
                   <span>{scan}</span>
                   <Compass size={17} />
@@ -205,11 +229,17 @@ function Dashboard() {
           </div>
           <div className="card">
             <h2 className="section-title">Recommended next lesson</h2>
-            <p>{dashboard.recommendations[0]}</p>
+            <p>{data.recommendations[0]}</p>
             <Link className="button secondary" href="/scan">
               Open
             </Link>
           </div>
+          {data.warning ? (
+            <div className="card compact">
+              <strong>Data status</strong>
+              <p className="muted">{data.warning}</p>
+            </div>
+          ) : null}
         </aside>
       </div>
     </Shell>
@@ -292,6 +322,7 @@ function TutorPanel({
   onProgress: (progress: LessonProgress) => void;
 }) {
   const [answer, setAnswer] = useState("");
+  const [memory, setMemory] = useState<StudentMemory>(demoMemory);
   const [messages, setMessages] = useState<TutorResponse[]>([
     {
       message: `Objective: ${analysis.learningObjective}`,
@@ -304,12 +335,19 @@ function TutorPanel({
   const [hintsUsed, setHintsUsed] = useState(0);
   const [attempts, setAttempts] = useState(0);
 
+  useEffect(() => {
+    fetch(`/api/memory/retrieve?studentId=demo-student&query=${encodeURIComponent(analysis.topic)}`)
+      .then((response) => response.json())
+      .then(setMemory)
+      .catch(() => setMemory(demoMemory));
+  }, [analysis.topic]);
+
   async function askTutor(hintRequested = false) {
     if (hintRequested) setHintsUsed((value) => value + 1);
     const response = await fetch("/api/tutor/respond", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ answer, hintRequested, topic: analysis.topic })
+      body: JSON.stringify({ answer, hintRequested, topic: analysis.topic, analysis, studentId: "demo-student" })
     });
     const tutor: TutorResponse = await response.json();
     setMessages((current) => [...current, tutor]);
@@ -322,14 +360,34 @@ function TutorPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           concept: analysis.topic,
-          previousMastery: progress?.mastery ?? demoMemory.mastery["Human Heart"] ?? 68,
+          previousMastery: progress?.mastery ?? memory.mastery[analysis.topic] ?? demoMemory.mastery["Human Heart"] ?? 68,
           correct: tutor.evaluation === "correct",
           hintsUsed,
           attempts: nextAttempts,
-          difficulty: 2
+          difficulty: 2,
+          studentId: "demo-student"
         })
       });
-      onProgress(await update.json());
+      const nextProgress: LessonProgress = await update.json();
+      onProgress(nextProgress);
+
+      if (tutor.nextAction === "complete") {
+        await fetch("/api/lesson/complete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            studentId: "demo-student",
+            name: "Thaddeus",
+            analysis,
+            progress: nextProgress,
+            tutorResponse: tutor,
+            answer,
+            hintsUsed,
+            attempts: nextAttempts
+          })
+        }).catch(() => undefined);
+        window.dispatchEvent(new Event("lumalearn:dashboard-refresh"));
+      }
     }
     setAnswer("");
   }
@@ -374,7 +432,7 @@ function TutorPanel({
       ) : null}
       <div className="bubble">
         <strong>Relevant memory</strong>
-        <p>{demoMemory.misconceptions[0]}</p>
+        <p>{memory.misconceptions[0] ?? memory.recommendedNextLesson}</p>
       </div>
     </aside>
   );
@@ -394,6 +452,7 @@ function ScanExperience() {
   async function analyze(file?: File) {
     setAnalyzing(true);
     const form = new FormData();
+    form.append("studentId", "demo-student");
     if (file) form.append("image", file);
     const response = await fetch("/api/analyze-page", { method: "POST", body: form });
     setAnalysis(await response.json());
@@ -404,7 +463,7 @@ function ScanExperience() {
 
   return (
     <Shell>
-      <Topbar title="Scan & Explore" subtitle="Camera-first on mobile, full model workspace on desktop." />
+      <Topbar title="Scan & Explore" subtitle="Camera-first on mobile, full model workspace on desktop." demoMode={activeAnalysis.demoMode} />
       <div className="scan-layout route-panel">
         <section className="card viewer-card">
           <div className="btn-row">
@@ -451,12 +510,21 @@ function ScanExperience() {
 }
 
 function Lessons() {
+  const [data, setData] = useState<DashboardData>(fallbackDashboard);
+
+  useEffect(() => {
+    fetch("/api/dashboard?studentId=demo-student")
+      .then((response) => response.json())
+      .then(setData)
+      .catch(() => setData(fallbackDashboard));
+  }, []);
+
   return (
     <Shell>
-      <Topbar title="My Lessons" subtitle="Adaptive AR lessons and recommended next steps." />
+      <Topbar title="My Lessons" subtitle="Adaptive AR lessons and recommended next steps." demoMode={data.demoMode} />
       <section className="route-panel card">
         <div className="lesson-list">
-          {dashboard.recentLessons.map((lesson) => (
+          {data.recentLessons.map((lesson) => (
             <div className="lesson-row" key={lesson.title}>
               <div>
                 <strong>{lesson.title}</strong>
@@ -472,11 +540,20 @@ function Lessons() {
 }
 
 function Progress() {
+  const [data, setData] = useState<DashboardData>(fallbackDashboard);
+
+  useEffect(() => {
+    fetch("/api/dashboard?studentId=demo-student")
+      .then((response) => response.json())
+      .then(setData)
+      .catch(() => setData(fallbackDashboard));
+  }, []);
+
   return (
     <Shell>
-      <Topbar title="Progress" subtitle="Deterministic mastery estimates based on attempts, hints, correctness, and difficulty." />
+      <Topbar title="Progress" subtitle="Deterministic mastery estimates based on attempts, hints, correctness, and difficulty." demoMode={data.demoMode} />
       <section className="route-panel stack">
-        {Object.entries(demoMemory.mastery).map(([concept, mastery]) => (
+        {Object.entries(data.mastery).map(([concept, mastery]) => (
           <div className="card" key={concept}>
             <div className="lesson-row" style={{ border: 0, padding: 0, background: "transparent" }}>
               <h2 className="section-title">{concept}</h2>
@@ -496,7 +573,7 @@ function LibraryView() {
   const models = useMemo(() => Object.values(MODEL_LIBRARY), []);
   return (
     <Shell>
-      <Topbar title="Model Library" subtitle="Whitelisted local 3D models Gemini is allowed to select." />
+      <Topbar title="Model Library" subtitle="Whitelisted local 3D models Gemini is allowed to select." demoMode={false} />
       <section className="route-panel library-grid">
         {models.map((model) => (
           <div className="card" key={model.id}>
@@ -529,7 +606,7 @@ function Profile() {
 
   return (
     <Shell>
-      <Topbar title="Profile" subtitle="Student memory is limited to useful educational context." />
+      <Topbar title="Profile" subtitle="Student memory is limited to useful educational context." demoMode={memory.demoMode} />
       <section className="route-panel content-grid">
         <div className="card">
           <h2>Thaddeus Lee</h2>

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { isDemoMode } from "@/lib/env";
+import { hasGemini } from "@/lib/env";
+import { retrieveRelevantMemories, memoryContextForGemini } from "@/lib/everos";
 import { tutorSchema } from "@/lib/validators";
 import type { TutorResponse } from "@/lib/types";
 
@@ -36,15 +37,28 @@ function demoTutor(answer: string, hintRequested: boolean): TutorResponse {
 }
 
 export async function POST(request: Request) {
-  const { answer = "", hintRequested = false, topic = "Human Heart" } = await request.json().catch(() => ({}));
-  const demoMode = isDemoMode();
+  const { answer = "", hintRequested = false, topic = "Human Heart", studentId = "demo-student", analysis } = await request.json().catch(() => ({}));
+  const memory = await retrieveRelevantMemories(String(studentId), `${topic} ${String(answer)}`);
 
-  if (demoMode) {
-    return NextResponse.json(demoTutor(String(answer), Boolean(hintRequested)));
+  if (!hasGemini()) {
+    const demo = demoTutor(String(answer), Boolean(hintRequested));
+    return NextResponse.json({
+      ...demo,
+      memoryUsed: !memory.demoMode,
+      memorySummary: memory.recommendedNextLesson
+    });
   }
 
   try {
-    const prompt = `You are a Socratic visual learning tutor for ${topic}. Evaluate the student answer without immediately revealing the full solution. Return strict JSON with message, question, hint, evaluation, misconception, nextAction. Student answer: ${String(answer)}`;
+    const prompt = [
+      `You are a Socratic visual learning tutor for ${topic}.`,
+      analysis ? `Textbook analysis: ${JSON.stringify(analysis)}` : "",
+      `Previous learning history from EverOS:\n${memoryContextForGemini(memory)}`,
+      "Personalize the explanation based on the memory, but do not reveal private implementation details.",
+      "Evaluate the student answer without immediately revealing the full solution.",
+      "Return strict JSON with message, question, hint, evaluation, misconception, nextAction.",
+      `Student answer: ${String(answer)}`
+    ].join("\n\n");
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
@@ -58,18 +72,21 @@ export async function POST(request: Request) {
     );
 
     if (!response.ok) {
-      return NextResponse.json(demoTutor(String(answer), Boolean(hintRequested)));
+      const demo = demoTutor(String(answer), Boolean(hintRequested));
+      return NextResponse.json({ ...demo, memoryUsed: !memory.demoMode });
     }
 
     const payload = await response.json();
     const text = payload?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
     const parsed = tutorSchema.safeParse(JSON.parse(text));
     if (!parsed.success) {
-      return NextResponse.json(demoTutor(String(answer), Boolean(hintRequested)));
+      const demo = demoTutor(String(answer), Boolean(hintRequested));
+      return NextResponse.json({ ...demo, memoryUsed: !memory.demoMode });
     }
 
-    return NextResponse.json({ ...parsed.data, demoMode: false });
+    return NextResponse.json({ ...parsed.data, demoMode: false, memoryUsed: !memory.demoMode });
   } catch {
-    return NextResponse.json(demoTutor(String(answer), Boolean(hintRequested)));
+    const demo = demoTutor(String(answer), Boolean(hintRequested));
+    return NextResponse.json({ ...demo, memoryUsed: !memory.demoMode });
   }
 }
