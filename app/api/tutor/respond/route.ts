@@ -229,7 +229,7 @@ export async function POST(request: Request) {
       String(topic),
       selectedObject,
       memory,
-      `OpenAI is unavailable for ${MODEL}. Check /api/health/openai for the full provider error.`
+      "The live AI tutor is temporarily unavailable, so LumaLearn is using its built-in lesson guide."
     );
   }
 }

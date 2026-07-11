@@ -514,7 +514,6 @@ function TutorConsole({
             <p>{message.text}</p>
             {message.question ? <small>{message.question}</small> : null}
             {message.hint ? <small>Hint: {message.hint}</small> : null}
-            {message.warning ? <small className="warning-text">{message.warning}</small> : null}
           </div>
         ))}
         {thinking ? <div className="museum-bubble tutor loading">The tutor is watching the model...</div> : null}
