@@ -18,7 +18,7 @@ import {
   Waves,
   ZoomIn
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { demoMemory } from "@/lib/demo-data";
 import { MODEL_LIBRARY } from "@/lib/models";
 import type { StudentMemory, TutorResponse } from "@/lib/types";
@@ -553,17 +553,17 @@ function ARModelStage({
   const model = MODEL_LIBRARY[modelId];
   return (
     <div className={`ar-model-stage selected-${selected}`}>
-      <model-viewer
-        className="ar-model-viewer"
-        src={model.path}
-        alt={`${title} AR model`}
-        ar
-        camera-controls
-        auto-rotate
-        shadow-intensity="1"
-        exposure="0.95"
-        environment-image="neutral"
-      />
+      {React.createElement("model-viewer", {
+        className: "ar-model-viewer",
+        src: model.path,
+        alt: `${title} AR model`,
+        ar: true,
+        "camera-controls": true,
+        "auto-rotate": true,
+        "shadow-intensity": "1",
+        exposure: "0.95",
+        "environment-image": "neutral"
+      })}
       <div className="ar-live-badge">
         <span>Loaded AR model</span>
         <strong>{model.label}</strong>
