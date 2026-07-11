@@ -9,8 +9,24 @@ function demoTutor(answer: string, hintRequested: boolean, topic = "Human Heart"
   const normalized = answer.toLowerCase();
   const selectedName = selectedObject?.label ?? topic;
   const selectedPurpose = selectedObject?.purpose;
+  const isQuestion =
+    normalized.includes("?") ||
+    /^(what|why|how|where|when|which|can|could|show|explain|replay|watch)\b/.test(normalized.trim());
 
   if (topic.toLowerCase().includes("cradle")) {
+    if (isQuestion && !hintRequested) {
+      return {
+        message: normalized.includes("last ball")
+          ? "The last ball moves because the incoming ball sends a pulse of momentum and energy through the touching balls. The middle balls mostly transmit that impulse, so the far ball swings out."
+          : `In the real Newton's cradle model, ${selectedName.toLowerCase()} helps you see momentum transfer through an almost-elastic collision.${selectedPurpose ? ` ${selectedPurpose}` : ""}`,
+        question: "Try pulling one ball, then two. What pattern do you see on the far side?",
+        hint: "Count how many balls leave compared with how many were released.",
+        evaluation: "partial",
+        nextAction: "ask",
+        demoMode: true
+      };
+    }
+
     return {
       message: hintRequested
         ? "Watch the row during impact: the middle balls mostly transmit the impulse, while the far ball carries the motion out."
@@ -24,6 +40,19 @@ function demoTutor(answer: string, hintRequested: boolean, topic = "Human Heart"
   }
 
   if (topic.toLowerCase().includes("chemistry") || topic.toLowerCase().includes("lab")) {
+    if (isQuestion && !hintRequested) {
+      return {
+        message: normalized.includes("flame")
+          ? "Increasing the flame transfers heat into the beaker faster, so the liquid particles move faster. In the model, watch the heat column and steam overlay intensify."
+          : `In this lab model, ${selectedName.toLowerCase()} is part of the heat-transfer story.${selectedPurpose ? ` ${selectedPurpose}` : ""}`,
+        question: "What visual change would tell you the liquid gained more thermal energy?",
+        hint: "Look for faster bubbling, more steam, or a color shift.",
+        evaluation: "partial",
+        nextAction: "ask",
+        demoMode: true
+      };
+    }
+
     return {
       message: hintRequested
         ? "Use the flame as your visual clue: a larger flame transfers thermal energy into the beaker faster."
@@ -39,6 +68,41 @@ function demoTutor(answer: string, hintRequested: boolean, topic = "Human Heart"
   const hasRightAtrium = normalized.includes("right atrium") || normalized.includes("right atria");
   const mentionsVenaCava = normalized.includes("vena cava");
   const correct = hasRightAtrium || mentionsVenaCava;
+
+  if (isQuestion && !hintRequested) {
+    if (normalized.includes("right atrium")) {
+      return {
+        message: "The right atrium is the upper-right chamber of the heart. It receives deoxygenated blood returning from the body through the vena cava, then passes it through a valve into the right ventricle.",
+        question: "After the right atrium, which chamber should the blue blood enter next?",
+        hint: "Follow the blue flow downward into the pumping chamber.",
+        evaluation: "partial",
+        nextAction: "ask",
+        demoMode: true
+      };
+    }
+
+    if (normalized.includes("red") || normalized.includes("oxygen")) {
+      return {
+        message: "Blood appears red when hemoglobin is carrying oxygen. In this lesson, red flow means oxygen-rich blood returning from the lungs and leaving the left ventricle through the aorta.",
+        question: "Which large vessel carries that red, oxygenated blood out to the body?",
+        hint: "Look for the vessel leaving the left ventricle.",
+        evaluation: "partial",
+        nextAction: "ask",
+        demoMode: true
+      };
+    }
+
+    if (normalized.includes("replay") || normalized.includes("flow") || normalized.includes("watch")) {
+      return {
+        message: "Watch the blue path first: vena cava to right atrium, right ventricle, then pulmonary artery. Then watch the red path: pulmonary veins to left atrium, left ventricle, then aorta.",
+        question: "Where does oxygenated blood leave the heart?",
+        hint: "Follow the red path out of the left ventricle.",
+        evaluation: "partial",
+        nextAction: "ask",
+        demoMode: true
+      };
+    }
+  }
 
   if (hintRequested) {
     return {
@@ -135,6 +199,8 @@ export async function POST(request: Request) {
       "Personalize the explanation based on the memory, but do not reveal private implementation details.",
       "Reference the selected object and current animation when answering.",
       "If the student asks what to watch, name the path, chamber, ball, flame, or liquid that should be highlighted.",
+      "If the student asks a question, answer it directly first. Do not praise it as a correct quiz answer.",
+      "Only evaluate as correct when the student is actually answering a prompt or making a claim.",
       "Evaluate the student answer or question. For open follow-up questions, use evaluation partial unless clearly correct.",
       "Return only strict JSON with these fields: message, question, hint, evaluation, misconception, nextAction.",
       "Allowed evaluation values: correct, partial, misconception, not_answered. Allowed nextAction values: ask, hint, complete.",
