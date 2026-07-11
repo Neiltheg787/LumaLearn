@@ -33,8 +33,8 @@ npm run start
 Create `.env.local` from `.env.example`:
 
 ```bash
-OPENAI_API_KEY=
-OPENAI_MODEL=gpt-5-mini
+openaiapikey=
+openaimodel=gpt-5-mini
 EVEROS_API_KEY=
 BUTTERBASE_API_KEY=
 BUTTERBASE_APP_ID=app_f7a779663k7k
@@ -42,7 +42,7 @@ BUTTERBASE_APP_ID=app_f7a779663k7k
 
 Do not prefix private keys with `VITE_` or `NEXT_PUBLIC_`. The browser only calls local `/api/*` routes; external services are contacted by server-side route handlers.
 
-`OPENAI_MODEL` is optional and defaults to `gpt-5-mini`, but it can be set on Vercel to pin a specific Responses API model.
+`openaimodel` is optional and defaults to `gpt-5-mini`, but it can be set on Vercel to pin a specific Responses API model.
 
 Use `/api/health/openai` after deployment to confirm the configured model can answer a simple prompt. The endpoint returns the selected model, latency, and either a successful response or the full OpenAI SDK error payload.
 
@@ -133,7 +133,7 @@ Camera access requires HTTPS in production. Vercel provides HTTPS automatically.
 ## Troubleshooting API routes
 
 - `/api/dashboard`: reads student streaks, points, mastery, scans, recommendations, and lessons from Butterbase with cached fallback.
-- `/api/analyze-page`: returns OpenAI analysis when `OPENAI_API_KEY` is set and stores scan metadata in Butterbase.
+- `/api/analyze-page`: returns OpenAI analysis when `openaiapikey` is set and stores scan metadata in Butterbase.
 - `/api/tutor/respond`: retrieves EverOS memory, injects it into OpenAI context, evaluates answers server-side, and falls back safely.
 - `/api/memory/retrieve` and `/api/memory/save`: read and write EverOS student memories.
 - `/api/progress/update`: calculates mastery deterministically, saves progress to Butterbase, and records mastery changes in EverOS.
@@ -147,7 +147,7 @@ If an API route fails in production, confirm the environment variables are prese
 Run this before deployment:
 
 ```bash
-rg "OPENAI_API_KEY|EVEROS_API_KEY|BUTTERBASE_API_KEY|VITE_|NEXT_PUBLIC_" .
+rg "openaiapikey|EVEROS_API_KEY|BUTTERBASE_API_KEY|VITE_|NEXT_PUBLIC_" .
 ```
 
 Private keys should only appear in server route code, README instructions, and `.env.example`, never in client components or bundled public assets.

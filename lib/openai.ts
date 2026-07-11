@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 
-export const MODEL = process.env.OPENAI_MODEL || "gpt-5-mini";
+export const MODEL = process.env.openaimodel || process.env.OPENAI_MODEL || "gpt-5-mini";
 
 let loggedModel = false;
 
@@ -12,10 +12,11 @@ export function logOpenAIModel() {
 
 export function getOpenAIClient() {
   logOpenAIModel();
-  if (!process.env.OPENAI_API_KEY) {
+  const apiKey = process.env.openaiapikey || process.env.OPENAI_API_KEY;
+  if (!apiKey) {
     throw new Error("OpenAI API key is not configured.");
   }
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  return new OpenAI({ apiKey });
 }
 
 export async function generateOpenAIText(input: string | unknown[]) {
