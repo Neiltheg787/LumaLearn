@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createPartFromBase64 } from "@google/genai";
+import type { ContentListUnion } from "@google/genai";
 import { demoAnalysis } from "@/lib/demo-data";
 import { hasGemini } from "@/lib/env";
 import { saveScan } from "@/lib/butterbase";
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
       "For heart or circulatory content, choose modelId heart."
     ].join(" ");
 
-    const contents =
+    const contents: ContentListUnion =
       image instanceof File
         ? [
             prompt,

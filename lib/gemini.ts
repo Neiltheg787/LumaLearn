@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import type { ContentListUnion } from "@google/genai";
 import { getGeminiApiKey } from "./env";
 
 export const MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash";
@@ -20,7 +21,7 @@ export function getGeminiClient() {
   return new GoogleGenAI({ apiKey });
 }
 
-export async function generateGeminiText(contents: string) {
+export async function generateGeminiText(contents: ContentListUnion) {
   const ai = getGeminiClient();
   const response = await ai.models.generateContent({
     model: MODEL,
@@ -29,7 +30,7 @@ export async function generateGeminiText(contents: string) {
   return response.text ?? "";
 }
 
-export async function generateGeminiJson(contents: unknown) {
+export async function generateGeminiJson(contents: ContentListUnion) {
   const ai = getGeminiClient();
   const response = await ai.models.generateContent({
     model: MODEL,
