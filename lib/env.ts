@@ -20,7 +20,7 @@ export function getGeminiApiKey() {
 }
 
 export function getGeminiModel() {
-  return process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  return process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
 }
 
 export function hasEverOS() {

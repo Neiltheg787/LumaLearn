@@ -34,7 +34,7 @@ Create `.env.local` from `.env.example`:
 
 ```bash
 GEMINI_API_KEY=
-GEMINI_MODEL=gemini-2.5-flash
+GEMINI_MODEL=gemini-2.5-flash-lite
 EVEROS_API_KEY=
 BUTTERBASE_API_KEY=
 BUTTERBASE_APP_ID=app_f7a779663k7k

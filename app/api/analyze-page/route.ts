@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { demoAnalysis } from "@/lib/demo-data";
-import { hasGemini } from "@/lib/env";
+import { getGeminiApiKey, getGeminiModel, hasGemini } from "@/lib/env";
 import { saveScan } from "@/lib/butterbase";
 import { analysisSchema } from "@/lib/validators";
 import type { PageAnalysis } from "@/lib/types";
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     };
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${getGeminiModel()}:generateContent?key=${getGeminiApiKey()}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     );
 
     if (!response.ok) {
-      return NextResponse.json({ ...demoAnalysis, demoMode: true, warning: "Gemini unavailable; using demo analysis." });
+      return NextResponse.json({ ...demoAnalysis, demoMode: true, warning: `Gemini unavailable for ${getGeminiModel()}; using demo analysis.` });
     }
 
     const payload = await response.json();
