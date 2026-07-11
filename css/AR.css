@@ -1,0 +1,25 @@
+body {
+  overflow: hidden;
+  background: black;
+}
+
+#content {
+  position: fixed;
+  margin-top: var(--marginTop);
+  margin-left: var(--marginLeft);
+  width: var(--vw);
+  display: flex;
+  justify-content: center;
+  z-index: 10;
+}
+
+button {
+  background: white;
+  border: none;
+  padding: 5px 25px;
+  border-radius: 0% 0% 10px 10px;
+}
+
+button:hover {
+  background: #f4f4f4;
+}

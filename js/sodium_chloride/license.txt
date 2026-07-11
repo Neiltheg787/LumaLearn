@@ -1,0 +1,11 @@
+Model Information:
+* title:	Sodium Chloride
+* source:	https://sketchfab.com/3d-models/sodium-chloride-fbadfd9b0230437ea9343277aab0a210
+* author:	arloopa (https://sketchfab.com/arloopa)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Sodium Chloride" (https://sketchfab.com/3d-models/sodium-chloride-fbadfd9b0230437ea9343277aab0a210) by arloopa (https://sketchfab.com/arloopa) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

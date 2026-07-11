@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LumaLearn</title>
+    <link rel="icon" type="image/svg+xml" href="./img/LumaLearn.svg" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+    />
+    <script
+      src="https://kit.fontawesome.com/825a35d965.js"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <style>
+    #spinner {
+      transition: all ease-in-out 2s;
+      animation: loader 1s;
+      animation-delay: 1s;
+      animation-iteration-count: 1;
+    }
+
+    @keyframes loader {
+      0% {
+        opacity: 100%;
+      }
+      100% {
+        opacity: 0%;
+      }
+    }
+  </style>
+  <body class="h-[100svh] max-w-[365px] mx-auto">
+    <div
+      class="fixed top-0 left-0 bottom-0 right-0 bg-white z-10 flex items-center justify-center"
+      id="spinner"
+    >
+      <img src="./img/LumaLearn.svg" alt="LumaLearn" class="w-52 max-w-[70%]" />
+    </div>
+    <header class="h-[50px] flex justify-center items-center">
+      <img src="./img/LumaLearn.svg" alt="LumaLearn" class="h-9 w-auto" />
+    </header>
+    <main class="h-[calc(100svh-50px-75px)] overflow-auto px-5 flex flex-col">
+      <div id="yourCard" class="p-3">
+        <div
+          class="bg-gradient-to-tr from-violet-300 to-fuchsia-300 h-40 rounded-lg flex relative p-5"
+        >
+          <div class="flex items-center justify-center h-[70px] gap-3">
+            <img
+              src="https://wallpapers.com/images/hd/pfp-pictures-ph6qxvz14p4uvj2j.jpg"
+              class="aspect-square rounded-full w-[70px]"
+            />
+            <div class="flex flex-col">
+              <p class="font-bold">@thaddeus_lee</p>
+              <p class="text-gray-500 text-sm">thaddeus@gmail.com</p>
+            </div>
+          </div>
+          <div class="flex absolute bottom-[10px] right-[10px] flex-col">
+            <div class="text-gray-500 flex items-center justify-end gap-2">
+              <i class="fa-solid fa-gamepad"></i> Points
+            </div>
+            <h1 class="text-4xl font-bold">23,390</h1>
+          </div>
+        </div>
+      </div>
+      <div id="pointHist" class="flex flex-col border-t-2 p-2">
+        <h2 class="font-bold text-lg">Points History</h2>
+        <div class="flex justify-between items-center">
+          <div class="flex flex-col">
+            <div class="text-green-500 font-bold">
+              +&nbsp;20 <i class="fa-solid fa-gamepad"></i>
+            </div>
+            <p class="font-bold">Scanned STEM Textbook A</p>
+            <p class="text-gray-400 text-sm">Oct 15, 12:12pm</p>
+          </div>
+          <i class="bi bi-arrow-right-short text-xl"></i>
+        </div>
+        <button type="button" class="text-blue-500">View all</button>
+      </div>
+      <div id="leaderboard" class="border-t-2 p-2">
+        <h2 class="font-bold text-lg">Leaderboard</h2>
+        <div class="flex p-2 flex-col gap-3">
+          <div class="flex items-center gap-2 w-full">
+            <p
+              class="text-xl font-bold aspect-square w-[40px] flex items-center justify-center"
+            >
+              01
+            </p>
+            <div class="bg-yellow-200 flex p-4 rounded-xl gap-3 w-full">
+              <img
+                src="https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/c27dc0a4-6276-4036-968e-51b70613de6d/dfbouue-a609b605-d553-4450-b56e-9cd707317231.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiJcL2ZcL2MyN2RjMGE0LTYyNzYtNDAzNi05NjhlLTUxYjcwNjEzZGU2ZFwvZGZib3V1ZS1hNjA5YjYwNS1kNTUzLTQ0NTAtYjU2ZS05Y2Q3MDczMTcyMzEuanBnIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.49hw3fXDtkGsM1XMh3yk-kwhdUCeRfXTwtdeQnrfuZ0"
+                class="aspect-square rounded-full w-[50px]"
+              />
+              <div class="flex flex-col text-sm items-center justify-center">
+                <p class="font-bold">@megan_nim</p>
+                <p class="font-bold text-gray-400">
+                  <i class="fa-solid fa-gamepad"></i>
+                  <span class="text-black">25,420</span> pts
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 w-full">
+            <p
+              class="text-xl font-bold aspect-square w-[40px] flex items-center justify-center text-rose-500"
+            >
+              02
+            </p>
+            <div
+              class="bg-purple-200 flex p-4 rounded-xl gap-3 w-full border-rose-500 border-4 box-content"
+            >
+              <img
+                src="https://wallpapers.com/images/hd/pfp-pictures-ph6qxvz14p4uvj2j.jpg"
+                class="aspect-square rounded-full w-[50px]"
+              />
+              <div class="flex flex-col text-sm items-center justify-center">
+                <p class="font-bold">@thaddeus_lee</p>
+                <p class="font-bold text-gray-400">
+                  <i class="fa-solid fa-gamepad"></i>
+                  <span class="text-black">23,390</span> pts
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 w-full">
+            <p
+              class="text-xl font-bold aspect-square w-[40px] flex items-center justify-center"
+            >
+              03
+            </p>
+            <div class="bg-pink-200 flex p-4 rounded-xl gap-3 w-full">
+              <img
+                src="https://cdn.hero.page/pfp/81c2b3b4-bc9b-4286-91fe-a974f3ca6ae5-mysterious-purple-haired-boy-stunning-purple-anime-pfp-boys-1.png"
+                class="aspect-square rounded-full w-[50px]"
+              />
+              <div class="flex flex-col text-sm items-center justify-center">
+                <p class="font-bold">@tang_jiayi</p>
+                <p class="font-bold text-gray-400">
+                  <i class="fa-solid fa-gamepad"></i>
+                  <span class="text-black">22,250</span> pts
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <footer
+      class="w-full fixed bottom-0 left-0 right-0 max-w-[365px] mx-auto flex text-xl h-[75px] justify-around shadow-2xl shadow-black"
+    >
+      <a
+        href="./"
+        class="flex flex-col justify-center items-center text-blue-500 aspect-square"
+      >
+        <i class="bi bi-house-door"></i>
+        <p class="m-0 text-xs font-bold">Home</p>
+      </a>
+      <a
+        href="./ar.html"
+        class="flex flex-col justify-center items-center aspect-square"
+      >
+        <i class="bi bi-qr-code-scan"></i>
+        <p class="m-0 text-xs font-bold">Scan</p>
+      </a>
+      <a
+        href="./game.html"
+        class="flex flex-col justify-center items-center aspect-square"
+      >
+        <i class="bi bi-controller"></i>
+        <p class="m-0 text-xs font-bold">Games</p>
+      </a>
+      <a
+        href="./account.html"
+        class="flex flex-col justify-center items-center aspect-square"
+      >
+        <i class="bi bi-person-circle"></i>
+        <p class="m-0 text-xs font-bold">Account</p>
+      </a>
+    </footer>
+    <script>
+      document.getElementById("spinner").addEventListener("animationend", () => {
+        document.getElementById("spinner").style.display = "none";
+      });
+    </script>
+  </body>
+</html>

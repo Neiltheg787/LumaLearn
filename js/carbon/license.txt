@@ -1,0 +1,11 @@
+Model Information:
+* title:	Carbono
+* source:	https://sketchfab.com/3d-models/carbono-22f3c1e6947c4d4595758ca37a2b4762
+* author:	fabianfranco436 (https://sketchfab.com/fabianfranco436)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Carbono" (https://sketchfab.com/3d-models/carbono-22f3c1e6947c4d4595758ca37a2b4762) by fabianfranco436 (https://sketchfab.com/fabianfranco436) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
