@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { demoMemory } from "@/lib/demo-data";
+import { MODEL_LIBRARY } from "@/lib/models";
 import type { StudentMemory, TutorResponse } from "@/lib/types";
 
 type DemoId = "heart" | "cradle" | "lab";
@@ -538,42 +539,52 @@ function localTutor(lesson: DemoId, objectId: string) {
   return quickAnswers[lesson][objectId] ?? fallbackByLesson[lesson];
 }
 
+function ARModelStage({
+  modelId,
+  title,
+  selected,
+  children
+}: {
+  modelId: "heart" | "newtons_cradle" | "bunsen_burner";
+  title: string;
+  selected: string;
+  children?: React.ReactNode;
+}) {
+  const model = MODEL_LIBRARY[modelId];
+  return (
+    <div className={`ar-model-stage selected-${selected}`}>
+      <model-viewer
+        className="ar-model-viewer"
+        src={model.path}
+        alt={`${title} AR model`}
+        ar
+        camera-controls
+        auto-rotate
+        shadow-intensity="1"
+        exposure="0.95"
+        environment-image="neutral"
+      />
+      <div className="ar-live-badge">
+        <span>Loaded AR model</span>
+        <strong>{model.label}</strong>
+      </div>
+      {children}
+    </div>
+  );
+}
+
 function HeartLesson({ selected, focus, onSelect }: { selected: string; focus: string; onSelect: (object: DemoObject) => void }) {
   const active = demoById("heart");
   return (
     <div className={`heart-scene focus-${focus}`}>
-      <svg viewBox="0 0 760 560" role="img" aria-label="Interactive beating heart blood flow">
-        <defs>
-          <filter id="heartGlow"><feGaussianBlur stdDeviation="7" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
-          <path id="bluePath" d="M130 112 C210 122 212 210 286 212 C350 218 355 318 300 350 C244 384 154 390 116 452" />
-          <path id="redPath" d="M622 438 C530 396 506 324 480 276 C450 218 510 154 622 108 C676 82 704 66 724 34" />
-          <linearGradient id="heartBody" x1="0" x2="1"><stop offset="0" stopColor="#a51f3d" /><stop offset="0.52" stopColor="#d84d64" /><stop offset="1" stopColor="#813d93" /></linearGradient>
-        </defs>
-        <g className="heart-transform">
-          <path className="vessel blue-vessel" d="M130 112 C210 122 212 210 286 212" />
-          <path className="vessel blue-vessel" d="M300 350 C244 384 154 390 116 452" />
-          <path className="vessel red-vessel" d="M480 276 C450 218 510 154 622 108 C676 82 704 66 724 34" />
-          <path className="vessel red-vessel" d="M622 438 C530 396 506 324 480 276" />
-          <text className="flow-label blue-label" x="95" y="92">{"Blue: body -> right heart -> lungs"}</text>
-          <text className="flow-label red-label" x="464" y="72">{"Red: lungs -> left heart -> body"}</text>
-          <path className="heart-body" filter="url(#heartGlow)" d="M367 123 C430 42 590 74 618 206 C650 358 496 451 380 512 C260 452 104 356 137 205 C166 72 310 45 367 123Z" />
-          <path className={`chamber ${selected === "right-atrium" ? "selected" : ""}`} d="M268 172 C214 180 187 226 203 276 C236 271 280 262 306 231 C303 204 292 184 268 172Z" />
-          <path className={`chamber ${selected === "right-ventricle" ? "selected" : ""}`} d="M225 302 C242 394 310 438 363 467 C358 382 332 315 296 268 C270 286 248 296 225 302Z" />
-          <path className={`chamber ${selected === "left-atrium" ? "selected" : ""}`} d="M474 168 C528 178 558 226 542 276 C503 271 463 258 438 230 C442 203 452 183 474 168Z" />
-          <path className={`chamber ${selected === "left-ventricle" ? "selected" : ""}`} d="M516 302 C500 398 431 440 382 470 C388 382 412 315 446 268 C474 286 492 297 516 302Z" />
-          <path className={`valves ${selected === "valves" ? "selected" : ""}`} d="M318 256 L354 286 M421 256 L386 286" />
-          {Array.from({ length: 11 }).map((_, index) => (
-            <circle key={`b-${index}`} r={index % 3 === 0 ? "9" : "6"} className="blood blue">
-              <animateMotion dur="2.6s" begin={`${index * 0.18}s`} repeatCount="indefinite"><mpath href="#bluePath" /></animateMotion>
-            </circle>
-          ))}
-          {Array.from({ length: 11 }).map((_, index) => (
-            <circle key={`r-${index}`} r={index % 3 === 0 ? "9" : "6"} className="blood red">
-              <animateMotion dur="2.6s" begin={`${index * 0.18}s`} repeatCount="indefinite"><mpath href="#redPath" /></animateMotion>
-            </circle>
-          ))}
-        </g>
-      </svg>
+      <ARModelStage modelId="heart" title={active.title} selected={selected}>
+        <div className="bloodflow-overlay" aria-hidden="true">
+          <span className="flow-ribbon blue-flow">Blue blood: body to lungs</span>
+          <span className="flow-ribbon red-flow">Red blood: lungs to body</span>
+          {Array.from({ length: 10 }).map((_, index) => <i key={`blue-${index}`} className="flow-particle blue-particle" />)}
+          {Array.from({ length: 10 }).map((_, index) => <i key={`red-${index}`} className="flow-particle red-particle" />)}
+        </div>
+      </ARModelStage>
       <Hotspot style={{ left: "32%", top: "36%" }} active={selected === "right-atrium"} object={active.objects[0]} onSelect={onSelect} />
       <Hotspot style={{ left: "37%", top: "61%" }} active={selected === "right-ventricle"} object={active.objects[1]} onSelect={onSelect} />
       <Hotspot style={{ left: "65%", top: "36%" }} active={selected === "left-atrium"} object={active.objects[2]} onSelect={onSelect} />
@@ -598,23 +609,12 @@ function CradleLesson({ selected, onSelect, onMastery }: { selected: string; onS
         <label>Pull <input type="range" min="20" max="72" value={distance} onChange={(event) => setDistance(Number(event.target.value))} /></label>
         <label>Speed <input type="range" min="0.6" max="1.6" step="0.1" value={speed} onChange={(event) => setSpeed(Number(event.target.value))} /></label>
       </div>
-      <svg viewBox="0 0 760 520" role="img" aria-label="Interactive Newton's cradle">
-        <rect className={selected === "frame" ? "frame selected" : "frame"} x="120" y="70" width="520" height="26" rx="8" />
-        <g className="pendulum-set">
-          {[0, 1, 2, 3, 4].map((ball) => {
-            const x = 280 + ball * 50;
-            const isLeft = ball < moved;
-            const isRight = ball >= 5 - moved;
-            return (
-              <g key={ball} className={`${isLeft ? "swing-left" : ""} ${isRight ? "swing-right" : ""}`}>
-                <line className={selected === "strings" ? "string selected" : "string"} x1={x} y1="95" x2={x} y2="324" />
-                <circle className={`cradle-ball ${selected.includes("ball") ? "selected" : ""}`} cx={x} cy="352" r="32" />
-              </g>
-            );
-          })}
-        </g>
-        <path className="momentum-wave" d="M265 352 C340 312 422 392 500 352" />
-      </svg>
+      <ARModelStage modelId="newtons_cradle" title={active.title} selected={selected}>
+        <div className="momentum-overlay" aria-hidden="true">
+          <span className="impact-pulse" />
+          <span className="momentum-line" />
+        </div>
+      </ARModelStage>
       <Hotspot style={{ left: "32%", top: "67%" }} active={selected === "left-ball"} object={active.objects[0]} onSelect={onSelect} />
       <Hotspot style={{ left: "50%", top: "67%" }} active={selected === "center-balls"} object={active.objects[1]} onSelect={onSelect} />
       <Hotspot style={{ left: "66%", top: "67%" }} active={selected === "right-ball"} object={active.objects[2]} onSelect={onSelect} />
@@ -641,19 +641,13 @@ function ChemistryLesson({ selected, onSelect, onMastery }: { selected: string; 
           <option value="indicator">Acid/base indicator</option>
         </select>
       </div>
-      <svg viewBox="0 0 760 520" role="img" aria-label="Interactive chemistry lab">
-        <g className={selected === "steam" ? "steam selected" : "steam"}>
-          <path d="M354 158 C330 114 388 104 360 62" />
-          <path d="M418 156 C392 112 450 102 422 60" />
-          <path d="M386 150 C360 98 428 92 398 42" />
-        </g>
-        <path className={selected === "beaker" ? "beaker selected" : "beaker"} d="M306 118 L454 118 L430 392 Q380 420 330 392Z" />
-        <path className={selected === "liquid" ? "liquid selected" : "liquid"} d="M326 306 Q380 286 434 306 L426 382 Q380 405 336 382Z" />
-        {Array.from({ length: 12 }).map((_, index) => <circle key={index} className="bubble-dot" cx={336 + (index % 6) * 18} cy={360 - (index % 4) * 18} r="4" />)}
-        <rect className={selected === "burner" ? "burner selected" : "burner"} x="318" y="405" width="126" height="42" rx="10" />
-        <rect className="burner-neck" x="366" y="352" width="30" height="56" rx="10" />
-        <path className={selected === "flame" ? "flame selected" : "flame"} d="M381 350 C332 296 384 258 380 218 C434 282 421 318 381 350Z" />
-      </svg>
+      <ARModelStage modelId="bunsen_burner" title={active.title} selected={selected}>
+        <div className="lab-overlay" aria-hidden="true">
+          <span className="heat-column" />
+          <span className="liquid-state">{liquid === "water" ? "Water" : liquid === "copper" ? "Copper sulfate" : "Indicator"} {boiling ? "boiling" : "warming"}</span>
+          {boiling ? Array.from({ length: 8 }).map((_, index) => <i key={index} className="steam-dot" />) : null}
+        </div>
+      </ARModelStage>
       <Hotspot style={{ left: "50%", top: "83%" }} active={selected === "burner"} object={active.objects[0]} onSelect={onSelect} />
       <Hotspot style={{ left: "50%", top: "61%" }} active={selected === "flame"} object={active.objects[1]} onSelect={onSelect} />
       <Hotspot style={{ left: "50%", top: "42%" }} active={selected === "beaker"} object={active.objects[2]} onSelect={onSelect} />
