@@ -36,7 +36,7 @@ Create `.env.local` from `.env.example`:
 GEMINI_API_KEY=
 EVEROS_API_KEY=
 BUTTERBASE_API_KEY=
-BUTTERBASE_PROJECT_ID=
+BUTTERBASE_APP_ID=app_f7a779663k7k
 ```
 
 Do not prefix private keys with `VITE_` or `NEXT_PUBLIC_`. The browser only calls local `/api/*` routes; external services are contacted by server-side route handlers.
@@ -45,7 +45,7 @@ Optional provider hosts may be set if your EverOS or Butterbase dashboard gives 
 
 ```bash
 EVEROS_API_BASE_URL=
-BUTTERBASE_API_BASE_URL=
+BUTTERBASE_API_BASE_URL=https://api.butterbase.ai/v1/app_f7a779663k7k
 ```
 
 ## EverOS memory
@@ -61,23 +61,35 @@ When a lesson starts, `/api/tutor/respond` retrieves relevant EverOS memories an
 
 ## Butterbase backend
 
-Butterbase is the primary persistent backend. The server-only adapter in `lib/butterbase.ts` manages:
+Butterbase is the primary persistent backend. The connected MCP provisioned the available app `app_f7a779663k7k` with the verified API base `https://api.butterbase.ai/v1/app_f7a779663k7k`. The account plan allowed only one app, so the existing Butterbase app was selected for LumaLearn.
 
-- `Students`
-- `Lessons`
-- `Progress`
-- `QuizAttempts`
-- `Scans`
-- `Achievements`
-- `Leaderboard`
+The server-only adapter in `lib/butterbase.ts` uses Butterbase's auto-generated REST table API. Butterbase requires lowercase snake_case identifiers, so the LumaLearn resources map to:
 
-The frontend never calls Butterbase directly. It reads dashboard data from `/api/dashboard`, writes scans via `/api/analyze-page`, writes progress via `/api/progress/update`, and completes lessons through `/api/lesson/complete`.
+- `Students` -> `students`
+- `Lessons` -> `lessons`
+- `Progress` -> `progress`
+- `QuizAttempts` -> `quiz_attempts`
+- `Scans` -> `scans`
+- `Achievements` -> `achievements`
+- `Leaderboard` -> `leaderboard`
 
-After adding Butterbase environment variables, run this once to create or verify the expected collections:
+Required production variables:
+
+```bash
+BUTTERBASE_API_KEY=
+BUTTERBASE_APP_ID=app_f7a779663k7k
+BUTTERBASE_API_BASE_URL=https://api.butterbase.ai/v1/app_f7a779663k7k
+```
+
+Do not expose `BUTTERBASE_API_KEY` through `NEXT_PUBLIC_` variables. The frontend never calls Butterbase directly. It reads dashboard data from `/api/dashboard`, writes scans via `/api/analyze-page`, writes progress via `/api/progress/update`, and completes lessons through `/api/lesson/complete`.
+
+After adding Butterbase environment variables, run this to verify server configuration:
 
 ```bash
 curl -X POST https://YOUR_VERCEL_DOMAIN/api/butterbase/setup
 ```
+
+Lesson completion is idempotent by `progress.id = studentId:lessonId`. A duplicate completion updates progress metadata but does not add points or create a second achievement.
 
 If Butterbase is unavailable, `/api/dashboard` returns cached demo data with a fallback warning instead of leaving the app blank.
 
