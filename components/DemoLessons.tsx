@@ -554,8 +554,8 @@ function HeartLesson({ selected, focus, onSelect }: { selected: string; focus: s
           <path className="vessel blue-vessel" d="M300 350 C244 384 154 390 116 452" />
           <path className="vessel red-vessel" d="M480 276 C450 218 510 154 622 108 C676 82 704 66 724 34" />
           <path className="vessel red-vessel" d="M622 438 C530 396 506 324 480 276" />
-          <text className="flow-label blue-label" x="95" y="92">Blue: body -> right heart -> lungs</text>
-          <text className="flow-label red-label" x="464" y="72">Red: lungs -> left heart -> body</text>
+          <text className="flow-label blue-label" x="95" y="92">{"Blue: body -> right heart -> lungs"}</text>
+          <text className="flow-label red-label" x="464" y="72">{"Red: lungs -> left heart -> body"}</text>
           <path className="heart-body" filter="url(#heartGlow)" d="M367 123 C430 42 590 74 618 206 C650 358 496 451 380 512 C260 452 104 356 137 205 C166 72 310 45 367 123Z" />
           <path className={`chamber ${selected === "right-atrium" ? "selected" : ""}`} d="M268 172 C214 180 187 226 203 276 C236 271 280 262 306 231 C303 204 292 184 268 172Z" />
           <path className={`chamber ${selected === "right-ventricle" ? "selected" : ""}`} d="M225 302 C242 394 310 438 363 467 C358 382 332 315 296 268 C270 286 248 296 225 302Z" />
