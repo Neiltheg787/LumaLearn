@@ -141,6 +141,102 @@ a {
   gap: 14px;
 }
 
+.flagship-launcher {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.flagship-tile {
+  min-height: 176px;
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  align-content: end;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid rgba(19, 32, 26, 0.1);
+  border-radius: 8px;
+  color: #f8fafc;
+  box-shadow: 0 22px 70px rgba(24, 39, 32, 0.16);
+  isolation: isolate;
+}
+
+.flagship-tile::before,
+.flagship-tile::after {
+  content: "";
+  position: absolute;
+  inset: auto 18px 88px auto;
+  width: 120px;
+  height: 82px;
+  border-radius: 999px;
+  opacity: 0.72;
+  z-index: -1;
+}
+
+.flagship-tile::after {
+  inset: 18px auto auto 16px;
+  width: 72px;
+  height: 72px;
+  filter: blur(8px);
+}
+
+.flagship-tile strong {
+  font-size: 1.2rem;
+}
+
+.flagship-tile p {
+  margin: 0;
+  color: rgba(248, 250, 252, 0.72);
+  line-height: 1.4;
+}
+
+.heart-tile {
+  background:
+    radial-gradient(circle at 80% 24%, rgba(255, 84, 104, 0.34), transparent 34%),
+    linear-gradient(145deg, #14060b, #361020 54%, #07080e);
+}
+
+.heart-tile::before {
+  background: radial-gradient(circle, #ff5468 0 22%, #397cff 28% 42%, transparent 46%);
+  animation: cardBeat 0.9s var(--ease-breath) infinite;
+}
+
+.heart-tile::after {
+  background: #397cff;
+}
+
+.cradle-tile {
+  background:
+    radial-gradient(circle at 76% 20%, rgba(255, 184, 112, 0.32), transparent 34%),
+    linear-gradient(145deg, #1a120c, #3b2a1a 58%, #0b0908);
+}
+
+.cradle-tile::before {
+  border: 3px solid rgba(255, 224, 168, 0.72);
+  box-shadow: inset 30px 0 rgba(255, 184, 112, 0.24), inset -30px 0 rgba(143, 184, 255, 0.18);
+  animation: cardSway var(--loop-med) ease-in-out infinite;
+}
+
+.cradle-tile::after {
+  background: #ffb870;
+}
+
+.lab-tile {
+  background:
+    radial-gradient(circle at 74% 24%, rgba(94, 231, 255, 0.3), transparent 34%),
+    linear-gradient(145deg, #061118, #102335 58%, #06080c);
+}
+
+.lab-tile::before {
+  background: linear-gradient(0deg, rgba(94, 231, 255, 0.58), transparent);
+  animation: cardSteam var(--loop-med) ease-in-out infinite;
+}
+
+.lab-tile::after {
+  background: #5ee7ff;
+}
+
 .card {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -589,17 +685,20 @@ a {
 
 .vessel {
   fill: none;
-  stroke-width: 18;
+  stroke-width: 24;
   stroke-linecap: round;
-  opacity: 0.5;
+  opacity: 0.82;
+  filter: drop-shadow(0 0 18px currentColor);
 }
 
 .blue-vessel {
   stroke: #2563eb;
+  color: #2563eb;
 }
 
 .red-vessel {
   stroke: #ef4444;
+  color: #ef4444;
 }
 
 .chamber {
@@ -631,25 +730,43 @@ a {
 }
 
 .blood {
-  filter: drop-shadow(0 0 8px currentColor);
+  filter: drop-shadow(0 0 10px currentColor) drop-shadow(0 0 22px currentColor);
+  opacity: 0.96;
 }
 
 .blood.blue {
-  fill: #38bdf8;
-  color: #38bdf8;
+  fill: #2f7dff;
+  color: #2f7dff;
 }
 
 .blood.red {
-  fill: #fb7185;
-  color: #fb7185;
+  fill: #ff334f;
+  color: #ff334f;
+}
+
+.flow-label {
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 0;
+  paint-order: stroke;
+  stroke: rgba(5, 7, 11, 0.92);
+  stroke-width: 5px;
+}
+
+.blue-label {
+  fill: #8ab8ff;
+}
+
+.red-label {
+  fill: #ff9baa;
 }
 
 .focus-oxygenated .blue {
-  opacity: 0.28;
+  opacity: 0.32;
 }
 
 .focus-deoxygenated .red {
-  opacity: 0.28;
+  opacity: 0.32;
 }
 
 .hotspot-dot {
@@ -993,7 +1110,8 @@ a {
 
   .cards,
   .library-grid,
-  .demo-cards {
+  .demo-cards,
+  .flagship-launcher {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -1053,7 +1171,8 @@ a {
 
   .cards,
   .library-grid,
-  .demo-cards {
+  .demo-cards,
+  .flagship-launcher {
     grid-template-columns: 1fr;
   }
 

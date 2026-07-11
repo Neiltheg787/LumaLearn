@@ -20,6 +20,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import React from "react";
 import QRCode from "qrcode";
+import { DemoLessons } from "@/components/DemoLessons";
 import { dashboard as fallbackDashboard, demoAnalysis, demoMemory } from "@/lib/demo-data";
 import { MODEL_LIBRARY } from "@/lib/models";
 import type { DashboardData, LessonProgress, PageAnalysis, StudentMemory, TutorResponse } from "@/lib/types";
@@ -29,7 +30,7 @@ type View = "dashboard" | "scan" | "lessons" | "progress" | "library" | "profile
 const nav = [
   { view: "dashboard" as const, href: "/", label: "Dashboard", icon: Home },
   { view: "scan" as const, href: "/scan", label: "Scan & Explore", icon: ScanLine },
-  { view: "lessons" as const, href: "/lessons", label: "My Lessons", icon: BookOpen },
+  { view: "lessons" as const, href: "/demo", label: "Demo Lessons", icon: BookOpen },
   { view: "progress" as const, href: "/progress", label: "Progress", icon: ChartNoAxesColumnIncreasing },
   { view: "library" as const, href: "/library", label: "Model Library", icon: Library },
   { view: "profile" as const, href: "/profile", label: "Profile", icon: CircleUserRound }
@@ -39,6 +40,7 @@ const mobileNav = nav.filter((item) => item.view !== "library");
 
 function viewFromPath(pathname: string): View {
   if (pathname.startsWith("/scan")) return "scan";
+  if (pathname.startsWith("/demo")) return "lessons";
   if (pathname.startsWith("/lessons")) return "lessons";
   if (pathname.startsWith("/progress")) return "progress";
   if (pathname.startsWith("/library")) return "library";
@@ -83,9 +85,9 @@ function Shell({ children }: { children: React.ReactNode }) {
         </nav>
         <div className="card compact" style={{ marginTop: "auto" }}>
           <div className="eyebrow">Next up</div>
-          <strong>Heart blood-flow check</strong>
-          <p className="muted">A reliable demo lesson is ready for judging.</p>
-          <Link className="button accent" href="/scan">
+          <strong>Flagship demos</strong>
+          <p className="muted">Heart, Newton's cradle, and chemistry lab are ready for judging.</p>
+          <Link className="button accent" href="/demo">
             <Zap size={16} />
             Open Demo
           </Link>
@@ -154,15 +156,36 @@ function Dashboard() {
             <h2>{data.recommendations[0]}</h2>
             <p className="muted">Use the beating heart model to explain where deoxygenated blood enters first.</p>
             <div className="btn-row">
-              <Link className="button accent" href="/scan">
-                <Camera size={17} />
-                Start Scan
+              <Link className="button accent" href="/demo">
+                <Sparkles size={17} />
+                Open Flagship Demos
               </Link>
               <Link className="button secondary" href="/lessons">
                 <BookOpen size={17} />
-                Review Lessons
+                Demo Lessons
+              </Link>
+              <Link className="button secondary" href="/scan">
+                <Camera size={17} />
+                Scan
               </Link>
             </div>
+          </div>
+          <div className="flagship-launcher">
+            <Link className="flagship-tile heart-tile" href="/demo">
+              <span className="eyebrow">Biology</span>
+              <strong>Human Heart</strong>
+              <p>Beating chambers, blue/red blood-flow particles, clickable anatomy, and a live AI tutor.</p>
+            </Link>
+            <Link className="flagship-tile cradle-tile" href="/demo">
+              <span className="eyebrow">Physics</span>
+              <strong>Newton's Cradle</strong>
+              <p>Pull balls, change distance and speed, then watch momentum transfer through the row.</p>
+            </Link>
+            <Link className="flagship-tile lab-tile" href="/demo">
+              <span className="eyebrow">Chemistry</span>
+              <strong>Chemistry Lab</strong>
+              <p>Heat liquids, tune the flame, observe steam, boiling, and color-changing reactions.</p>
+            </Link>
           </div>
           <div className="cards">
             <div className="card compact">
@@ -510,31 +533,9 @@ function ScanExperience() {
 }
 
 function Lessons() {
-  const [data, setData] = useState<DashboardData>(fallbackDashboard);
-
-  useEffect(() => {
-    fetch("/api/dashboard?studentId=demo-student")
-      .then((response) => response.json())
-      .then(setData)
-      .catch(() => setData(fallbackDashboard));
-  }, []);
-
   return (
     <Shell>
-      <Topbar title="My Lessons" subtitle="Adaptive AR lessons and recommended next steps." demoMode={data.demoMode} />
-      <section className="route-panel card">
-        <div className="lesson-list">
-          {data.recentLessons.map((lesson) => (
-            <div className="lesson-row" key={lesson.title}>
-              <div>
-                <strong>{lesson.title}</strong>
-                <p className="muted">{lesson.subject} lesson with mastery evidence and points history.</p>
-              </div>
-              <span className="pill">{lesson.points} pts</span>
-            </div>
-          ))}
-        </div>
-      </section>
+      <DemoLessons />
     </Shell>
   );
 }
