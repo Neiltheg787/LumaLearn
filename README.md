@@ -34,12 +34,15 @@ Create `.env.local` from `.env.example`:
 
 ```bash
 GEMINI_API_KEY=
+GEMINI_MODEL=gemini-2.5-flash
 EVEROS_API_KEY=
 BUTTERBASE_API_KEY=
 BUTTERBASE_APP_ID=app_f7a779663k7k
 ```
 
 Do not prefix private keys with `VITE_` or `NEXT_PUBLIC_`. The browser only calls local `/api/*` routes; external services are contacted by server-side route handlers.
+
+The tutor route also accepts `GOOGLE_API_KEY` or `GOOGLE_GENERATIVE_AI_API_KEY` as server-side aliases for `GEMINI_API_KEY`. `GEMINI_MODEL` is optional, but should be set on Vercel if you want to pin a specific Gemini model.
 
 Optional provider hosts may be set if your EverOS or Butterbase dashboard gives a project-specific API URL:
 

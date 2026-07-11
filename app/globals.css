@@ -1132,10 +1132,42 @@ a {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
 }
 
 .tutor-head h2 {
   margin: 2px 0 0;
+}
+
+.ai-status {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(248, 250, 252, 0.78);
+  font-size: 0.76rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.ai-status.live {
+  border-color: rgba(45, 212, 191, 0.42);
+  color: #99f6e4;
+  box-shadow: 0 0 28px rgba(45, 212, 191, 0.16);
+}
+
+.ai-status.fallback {
+  border-color: rgba(251, 191, 36, 0.42);
+  color: #fde68a;
+}
+
+.ai-status.error {
+  border-color: rgba(248, 113, 113, 0.48);
+  color: #fecaca;
 }
 
 .progress-stack {
@@ -1189,6 +1221,11 @@ a {
   color: inherit;
   opacity: 0.72;
   font-weight: 750;
+}
+
+.warning-text {
+  color: #fde68a !important;
+  opacity: 1 !important;
 }
 
 .museum-bubble.tutor {

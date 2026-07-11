@@ -1,6 +1,6 @@
 export function envStatus() {
   return {
-    gemini: Boolean(process.env.GEMINI_API_KEY),
+    gemini: Boolean(getGeminiApiKey()),
     everos: Boolean(process.env.EVEROS_API_KEY),
     butterbase: Boolean(process.env.BUTTERBASE_API_KEY && (process.env.BUTTERBASE_APP_ID || process.env.BUTTERBASE_PROJECT_ID))
   };
@@ -12,7 +12,15 @@ export function isDemoMode() {
 }
 
 export function hasGemini() {
-  return Boolean(process.env.GEMINI_API_KEY);
+  return Boolean(getGeminiApiKey());
+}
+
+export function getGeminiApiKey() {
+  return process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || "";
+}
+
+export function getGeminiModel() {
+  return process.env.GEMINI_MODEL || "gemini-2.5-flash";
 }
 
 export function hasEverOS() {

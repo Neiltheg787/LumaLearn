@@ -52,6 +52,7 @@ type TutorMessage = {
   question?: string;
   hint?: string;
   evaluation?: TutorResponse["evaluation"];
+  warning?: string;
 };
 
 const demos: DemoConfig[] = [
@@ -397,6 +398,8 @@ function TutorConsole({
 }) {
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
+  const [aiStatus, setAiStatus] = useState<"unknown" | "live" | "fallback" | "error">("unknown");
+  const [aiModel, setAiModel] = useState("Gemini");
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -441,7 +444,12 @@ function TutorConsole({
           }
         })
       });
+      if (!response.ok) {
+        throw new Error(`Tutor API failed (${response.status})`);
+      }
       const tutor: TutorResponse = await response.json();
+      setAiStatus(tutor.demoMode || tutor.source === "fallback" ? "fallback" : "live");
+      if (tutor.model) setAiModel(tutor.model);
       setMessages((current) => [
         ...current,
         {
@@ -449,14 +457,22 @@ function TutorConsole({
           text: tutor.message || localTutor(lesson.id, selectedObject.id),
           question: tutor.question,
           hint: tutor.hint,
-          evaluation: tutor.evaluation
+          evaluation: tutor.evaluation,
+          warning: tutor.warning
         }
       ]);
       nudgeMastery(tutor.evaluation === "correct" ? 3 : hintRequested ? 1 : 0);
-    } catch {
+    } catch (error) {
+      setAiStatus("error");
       setMessages((current) => [
         ...current,
-        { role: "tutor", text: localTutor(lesson.id, selectedObject.id), question: lesson.prompt, evaluation: "partial" }
+        {
+          role: "tutor",
+          text: localTutor(lesson.id, selectedObject.id),
+          question: lesson.prompt,
+          evaluation: "partial",
+          warning: error instanceof Error ? error.message : "Tutor request failed."
+        }
       ]);
     } finally {
       window.clearTimeout(timeout);
@@ -471,7 +487,10 @@ function TutorConsole({
           <span className="eyebrow">Live Gemini Tutor</span>
           <h2>{lesson.title}</h2>
         </div>
-        <Bot size={25} />
+        <div className={`ai-status ${aiStatus}`}>
+          <Bot size={17} />
+          <span>{aiStatus === "live" ? aiModel : aiStatus === "fallback" ? "Fallback" : aiStatus === "error" ? "Retry" : "Ready"}</span>
+        </div>
       </div>
       <div className="progress-stack">
         <div className="lesson-row clean">
@@ -495,6 +514,7 @@ function TutorConsole({
             <p>{message.text}</p>
             {message.question ? <small>{message.question}</small> : null}
             {message.hint ? <small>Hint: {message.hint}</small> : null}
+            {message.warning ? <small className="warning-text">{message.warning}</small> : null}
           </div>
         ))}
         {thinking ? <div className="museum-bubble tutor loading">Gemini is watching the model...</div> : null}

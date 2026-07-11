@@ -372,6 +372,19 @@ function TutorPanel({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ answer, hintRequested, topic: analysis.topic, analysis, studentId: "demo-student" })
     });
+    if (!response.ok) {
+      setMessages((current) => [
+        ...current,
+        {
+          message: "I could not reach the tutor service. Try again in a moment.",
+          question: analysis.openingQuestion,
+          hint: "If this keeps happening, check the server Gemini environment variable.",
+          nextAction: "ask",
+          demoMode: true
+        }
+      ]);
+      return;
+    }
     const tutor: TutorResponse = await response.json();
     setMessages((current) => [...current, tutor]);
 

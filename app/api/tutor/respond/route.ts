@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { demoMemory } from "@/lib/demo-data";
-import { hasGemini } from "@/lib/env";
+import { getGeminiApiKey, getGeminiModel, hasGemini } from "@/lib/env";
 import { retrieveRelevantMemories, memoryContextForGemini } from "@/lib/everos";
 import { tutorSchema } from "@/lib/validators";
-import type { TutorResponse } from "@/lib/types";
+import type { StudentMemory, TutorResponse } from "@/lib/types";
 
 function demoTutor(answer: string, hintRequested: boolean, topic = "Human Heart", selectedObject?: { label?: string; purpose?: string }): TutorResponse {
   const normalized = answer.toLowerCase();
@@ -75,6 +75,33 @@ async function retrieveMemoryFast(studentId: string, query: string) {
   ]);
 }
 
+function parseGeminiJson(text: string) {
+  const trimmed = text.trim();
+  const unfenced = trimmed.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
+  const firstBrace = unfenced.indexOf("{");
+  const lastBrace = unfenced.lastIndexOf("}");
+  const candidate = firstBrace >= 0 && lastBrace > firstBrace ? unfenced.slice(firstBrace, lastBrace + 1) : unfenced;
+  return JSON.parse(candidate);
+}
+
+function fallbackResponse(
+  answer: string,
+  hintRequested: boolean,
+  topic: string,
+  selectedObject: { label?: string; purpose?: string } | undefined,
+  memory: StudentMemory,
+  warning: string
+) {
+  const demo = demoTutor(answer, hintRequested, topic, selectedObject);
+  return NextResponse.json({
+    ...demo,
+    source: "fallback",
+    warning,
+    memoryUsed: !memory.demoMode,
+    memorySummary: memory.recommendedNextLesson
+  });
+}
+
 export async function POST(request: Request) {
   const {
     answer = "",
@@ -90,15 +117,12 @@ export async function POST(request: Request) {
   const memory = await retrieveMemoryFast(String(studentId), `${topic} ${String(answer)}`);
 
   if (!hasGemini()) {
-    const demo = demoTutor(String(answer), Boolean(hintRequested), String(topic), selectedObject);
-    return NextResponse.json({
-      ...demo,
-      memoryUsed: !memory.demoMode,
-      memorySummary: memory.recommendedNextLesson
-    });
+    return fallbackResponse(String(answer), Boolean(hintRequested), String(topic), selectedObject, memory, "Gemini API key is not configured on the server.");
   }
 
   try {
+    const apiKey = getGeminiApiKey();
+    const model = getGeminiModel();
     const prompt = [
       `You are the live Gemini tutor inside LumaLearn's interactive ${topic} workspace.`,
       "The student is learning through a visual model, not a text-only chat. Never answer generically when lesson context exists.",
@@ -112,11 +136,12 @@ export async function POST(request: Request) {
       "Reference the selected object and current animation when answering.",
       "If the student asks what to watch, name the path, chamber, ball, flame, or liquid that should be highlighted.",
       "Evaluate the student answer or question. For open follow-up questions, use evaluation partial unless clearly correct.",
-      "Return strict JSON with message, question, hint, evaluation, misconception, nextAction.",
+      "Return only strict JSON with these fields: message, question, hint, evaluation, misconception, nextAction.",
+      "Allowed evaluation values: correct, partial, misconception, not_answered. Allowed nextAction values: ask, hint, complete.",
       `Student answer: ${String(answer)}`
     ].join("\n\n");
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -129,21 +154,40 @@ export async function POST(request: Request) {
     );
 
     if (!response.ok) {
-      const demo = demoTutor(String(answer), Boolean(hintRequested), String(topic), selectedObject);
-      return NextResponse.json({ ...demo, memoryUsed: !memory.demoMode });
+      const errorText = await response.text().catch(() => "");
+      return fallbackResponse(
+        String(answer),
+        Boolean(hintRequested),
+        String(topic),
+        selectedObject,
+        memory,
+        `Gemini request failed (${response.status}). ${errorText.slice(0, 180)}`
+      );
     }
 
     const payload = await response.json();
     const text = payload?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
-    const parsed = tutorSchema.safeParse(JSON.parse(text));
+    const parsed = tutorSchema.safeParse(parseGeminiJson(text));
     if (!parsed.success) {
-      const demo = demoTutor(String(answer), Boolean(hintRequested), String(topic), selectedObject);
-      return NextResponse.json({ ...demo, memoryUsed: !memory.demoMode });
+      return fallbackResponse(String(answer), Boolean(hintRequested), String(topic), selectedObject, memory, "Gemini returned an unexpected tutor shape.");
     }
 
-    return NextResponse.json({ ...parsed.data, demoMode: false, memoryUsed: !memory.demoMode });
-  } catch {
-    const demo = demoTutor(String(answer), Boolean(hintRequested), String(topic), selectedObject);
-    return NextResponse.json({ ...demo, memoryUsed: !memory.demoMode });
+    return NextResponse.json({
+      ...parsed.data,
+      demoMode: false,
+      source: "gemini",
+      model: getGeminiModel(),
+      memoryUsed: !memory.demoMode,
+      memorySummary: memory.recommendedNextLesson
+    });
+  } catch (error) {
+    return fallbackResponse(
+      String(answer),
+      Boolean(hintRequested),
+      String(topic),
+      selectedObject,
+      memory,
+      error instanceof Error ? `Gemini tutor failed: ${error.message}` : "Gemini tutor failed."
+    );
   }
 }
