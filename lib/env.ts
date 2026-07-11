@@ -19,10 +19,6 @@ export function getGeminiApiKey() {
   return process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || "";
 }
 
-export function getGeminiModel() {
-  return process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
-}
-
 export function hasEverOS() {
   return Boolean(process.env.EVEROS_API_KEY);
 }

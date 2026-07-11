@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { demoMemory } from "@/lib/demo-data";
-import { getGeminiApiKey, getGeminiModel, hasGemini } from "@/lib/env";
+import { hasGemini } from "@/lib/env";
 import { retrieveRelevantMemories, memoryContextForGemini } from "@/lib/everos";
+import { MODEL, generateGeminiJson } from "@/lib/gemini";
 import { tutorSchema } from "@/lib/validators";
 import type { StudentMemory, TutorResponse } from "@/lib/types";
 
@@ -185,8 +186,6 @@ export async function POST(request: Request) {
   }
 
   try {
-    const apiKey = getGeminiApiKey();
-    const model = getGeminiModel();
     const prompt = [
       `You are the live Gemini tutor inside LumaLearn's interactive ${topic} workspace.`,
       "The student is learning through a visual model, not a text-only chat. Never answer generically when lesson context exists.",
@@ -206,33 +205,10 @@ export async function POST(request: Request) {
       "Allowed evaluation values: correct, partial, misconception, not_answered. Allowed nextAction values: ask, hint, complete.",
       `Student answer: ${String(answer)}`
     ].join("\n\n");
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        signal: AbortSignal.timeout(8000),
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { response_mime_type: "application/json" }
-        })
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => "");
-      return fallbackResponse(
-        String(answer),
-        Boolean(hintRequested),
-        String(topic),
-        selectedObject,
-        memory,
-        `Gemini request failed (${response.status}). ${errorText.slice(0, 180)}`
-      );
-    }
-
-    const payload = await response.json();
-    const text = payload?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
+    const text = await Promise.race([
+      generateGeminiJson(prompt),
+      new Promise<string>((_, reject) => setTimeout(() => reject(new Error("Gemini tutor timed out.")), 8000))
+    ]);
     const parsed = tutorSchema.safeParse(parseGeminiJson(text));
     if (!parsed.success) {
       return fallbackResponse(String(answer), Boolean(hintRequested), String(topic), selectedObject, memory, "Gemini returned an unexpected tutor shape.");
@@ -242,7 +218,7 @@ export async function POST(request: Request) {
       ...parsed.data,
       demoMode: false,
       source: "gemini",
-      model: getGeminiModel(),
+      model: MODEL,
       memoryUsed: !memory.demoMode,
       memorySummary: memory.recommendedNextLesson
     });
@@ -253,7 +229,7 @@ export async function POST(request: Request) {
       String(topic),
       selectedObject,
       memory,
-      error instanceof Error ? `Gemini tutor failed: ${error.message}` : "Gemini tutor failed."
+      `Gemini is unavailable for ${MODEL}. Check /api/health/gemini for the full Google error.`
     );
   }
 }

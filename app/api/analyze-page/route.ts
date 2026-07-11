@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import { createPartFromBase64 } from "@google/genai";
 import { demoAnalysis } from "@/lib/demo-data";
-import { getGeminiApiKey, getGeminiModel, hasGemini } from "@/lib/env";
+import { hasGemini } from "@/lib/env";
 import { saveScan } from "@/lib/butterbase";
+import { MODEL, generateGeminiJson, googleErrorPayload } from "@/lib/gemini";
 import { analysisSchema } from "@/lib/validators";
 import type { PageAnalysis } from "@/lib/types";
 
@@ -23,42 +25,18 @@ export async function POST(request: Request) {
       "For heart or circulatory content, choose modelId heart."
     ].join(" ");
 
-    const body = {
-      contents: [
-        {
-          parts: [
-            { text: prompt },
-            ...(image instanceof File
-              ? [
-                  {
-                    inline_data: {
-                      mime_type: image.type || "image/png",
-                      data: Buffer.from(await image.arrayBuffer()).toString("base64")
-                    }
-                  }
-                ]
-              : [])
+    const contents =
+      image instanceof File
+        ? [
+            prompt,
+            createPartFromBase64(
+              Buffer.from(await image.arrayBuffer()).toString("base64"),
+              image.type || "image/png"
+            )
           ]
-        }
-      ],
-      generationConfig: { response_mime_type: "application/json" }
-    };
+        : prompt;
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${getGeminiModel()}:generateContent?key=${getGeminiApiKey()}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      }
-    );
-
-    if (!response.ok) {
-      return NextResponse.json({ ...demoAnalysis, demoMode: true, warning: `Gemini unavailable for ${getGeminiModel()}; using demo analysis.` });
-    }
-
-    const payload = await response.json();
-    const text = payload?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
+    const text = await generateGeminiJson(contents);
     const parsed = analysisSchema.safeParse(JSON.parse(text));
     if (!parsed.success) {
       return NextResponse.json({ ...demoAnalysis, demoMode: true, warning: "Invalid Gemini JSON; using demo analysis." });
@@ -67,7 +45,12 @@ export async function POST(request: Request) {
     const result: PageAnalysis = { ...parsed.data, demoMode: false } as PageAnalysis;
     await saveScan({ studentId, analysis: result, imageName: image instanceof File ? image.name : undefined });
     return NextResponse.json(result);
-  } catch {
-    return NextResponse.json({ ...demoAnalysis, demoMode: true, warning: "Analysis failed; using demo analysis." });
+  } catch (error) {
+    return NextResponse.json({
+      ...demoAnalysis,
+      demoMode: true,
+      warning: `Gemini analysis failed for ${MODEL}; using demo analysis.`,
+      googleError: googleErrorPayload(error)
+    });
   }
 }
