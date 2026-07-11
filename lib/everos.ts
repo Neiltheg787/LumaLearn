@@ -158,7 +158,7 @@ export async function updateMasteryMemory(studentId: string, progress: LessonPro
   });
 }
 
-export function memoryContextForGemini(memory: StudentMemory) {
+export function memoryContextForAI(memory: StudentMemory) {
   return [
     `Preferred learning style: ${memory.preferredExplanationStyle}`,
     `Concepts learned: ${memory.conceptsStudied.join(", ")}`,

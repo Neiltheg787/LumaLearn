@@ -378,7 +378,7 @@ function TutorPanel({
         {
           message: "I could not reach the tutor service. Try again in a moment.",
           question: analysis.openingQuestion,
-          hint: "If this keeps happening, check the server Gemini environment variable.",
+          hint: "If this keeps happening, check the server OpenAI environment variable.",
           nextAction: "ask",
           demoMode: true
         }
@@ -587,7 +587,7 @@ function LibraryView() {
   const models = useMemo(() => Object.values(MODEL_LIBRARY), []);
   return (
     <Shell>
-      <Topbar title="Model Library" subtitle="Whitelisted local 3D models Gemini is allowed to select." demoMode={false} />
+      <Topbar title="Model Library" subtitle="Whitelisted local 3D models the AI tutor is allowed to select." demoMode={false} />
       <section className="route-panel library-grid">
         {models.map((model) => (
           <div className="card" key={model.id}>

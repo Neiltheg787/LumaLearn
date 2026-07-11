@@ -223,7 +223,7 @@ export function DemoLessons() {
       <section className="demo-hero">
         <div>
           <span className="eyebrow">AI for Education Hackathon</span>
-          <h1>Interactive science museum, powered by Gemini</h1>
+          <h1>Interactive science museum, powered by AI</h1>
           <p className="muted">Choose a flagship lesson. Each opens instantly with a live tutor, animated model, hotspots, mastery, and context-aware follow-up questions.</p>
         </div>
         <div className="demo-cards" aria-label="Demo lessons">
@@ -399,7 +399,7 @@ function TutorConsole({
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
   const [aiStatus, setAiStatus] = useState<"unknown" | "live" | "fallback" | "error">("unknown");
-  const [aiModel, setAiModel] = useState("Gemini");
+  const [aiModel, setAiModel] = useState("AI");
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -484,7 +484,7 @@ function TutorConsole({
     <aside className="tutor-console">
       <div className="tutor-head">
         <div>
-          <span className="eyebrow">Live Gemini Tutor</span>
+          <span className="eyebrow">Live AI Tutor</span>
           <h2>{lesson.title}</h2>
         </div>
         <div className={`ai-status ${aiStatus}`}>
@@ -517,7 +517,7 @@ function TutorConsole({
             {message.warning ? <small className="warning-text">{message.warning}</small> : null}
           </div>
         ))}
-        {thinking ? <div className="museum-bubble tutor loading">Gemini is watching the model...</div> : null}
+        {thinking ? <div className="museum-bubble tutor loading">The tutor is watching the model...</div> : null}
       </div>
       <div className="suggestions">
         {lesson.suggestions.map((suggestion) => (

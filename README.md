@@ -7,9 +7,9 @@ LumaLearn is an AI-powered visual learning prototype for STEM education. It pres
 - Responsive desktop dashboard with sidebar navigation, learning activity, saved scans, mastery, points, and recommendations.
 - Camera-first Scan & Explore page with upload fallback, Demo Heart Lesson fallback, WebGL model viewer, QR handoff, and tutor panel.
 - Server-side API routes for page analysis, tutor responses, memory save/retrieve, and progress updates.
-- Fixed local model whitelist for Gemini selection: `heart`, `bunsen_burner`, `sodium`, `lithium`, `newtons_cradle`, `periodic_table`, `sodium_chloride`, `helium`, and `carbon`.
+- Fixed local model whitelist for AI model selection: `heart`, `bunsen_burner`, `sodium`, `lithium`, `newtons_cradle`, `periodic_table`, `sodium_chloride`, `helium`, and `carbon`.
 - Deterministic mastery scoring in application code.
-- Demo Mode when Gemini, EverOS, or Butterbase credentials are unavailable.
+- Demo Mode when OpenAI, EverOS, or Butterbase credentials are unavailable.
 - Legacy AR page at `/ar.html` using the original A-Frame, AR.js, MindAR, local models, and gesture scripts.
 
 ## Local setup
@@ -33,8 +33,8 @@ npm run start
 Create `.env.local` from `.env.example`:
 
 ```bash
-GEMINI_API_KEY=
-GEMINI_MODEL=
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-5-mini
 EVEROS_API_KEY=
 BUTTERBASE_API_KEY=
 BUTTERBASE_APP_ID=app_f7a779663k7k
@@ -42,9 +42,9 @@ BUTTERBASE_APP_ID=app_f7a779663k7k
 
 Do not prefix private keys with `VITE_` or `NEXT_PUBLIC_`. The browser only calls local `/api/*` routes; external services are contacted by server-side route handlers.
 
-The tutor route also accepts `GOOGLE_API_KEY` or `GOOGLE_GENERATIVE_AI_API_KEY` as server-side aliases for `GEMINI_API_KEY`. `GEMINI_MODEL` is optional, but should be set on Vercel if you want to pin a specific Gemini model.
+`OPENAI_MODEL` is optional and defaults to `gpt-5-mini`, but it can be set on Vercel to pin a specific Responses API model.
 
-Use `/api/health/gemini` after deployment to confirm the configured model can answer a simple prompt. The endpoint returns the selected model and either a successful response or the full Google SDK error payload.
+Use `/api/health/openai` after deployment to confirm the configured model can answer a simple prompt. The endpoint returns the selected model, latency, and either a successful response or the full OpenAI SDK error payload.
 
 Optional provider hosts may be set if your EverOS or Butterbase dashboard gives a project-specific API URL:
 
@@ -62,7 +62,7 @@ EverOS is used as the long-term student memory layer. The server-only adapter in
 - `saveLessonMemory()`
 - `updateMasteryMemory()`
 
-When a lesson starts, `/api/tutor/respond` retrieves relevant EverOS memories and injects a memory summary into the Gemini tutoring prompt. Lesson completion and mastery updates write back to EverOS. If EverOS is unavailable, tutoring continues with no crash and the UI uses cached memory context.
+When a lesson starts, `/api/tutor/respond` retrieves relevant EverOS memories and injects a memory summary into the OpenAI tutoring prompt. Lesson completion and mastery updates write back to EverOS. If EverOS is unavailable, tutoring continues with no crash and the UI uses cached memory context.
 
 ## Butterbase backend
 
@@ -133,8 +133,8 @@ Camera access requires HTTPS in production. Vercel provides HTTPS automatically.
 ## Troubleshooting API routes
 
 - `/api/dashboard`: reads student streaks, points, mastery, scans, recommendations, and lessons from Butterbase with cached fallback.
-- `/api/analyze-page`: returns Gemini analysis when `GEMINI_API_KEY` is set and stores scan metadata in Butterbase.
-- `/api/tutor/respond`: retrieves EverOS memory, injects it into Gemini context, evaluates answers server-side, and falls back safely.
+- `/api/analyze-page`: returns OpenAI analysis when `OPENAI_API_KEY` is set and stores scan metadata in Butterbase.
+- `/api/tutor/respond`: retrieves EverOS memory, injects it into OpenAI context, evaluates answers server-side, and falls back safely.
 - `/api/memory/retrieve` and `/api/memory/save`: read and write EverOS student memories.
 - `/api/progress/update`: calculates mastery deterministically, saves progress to Butterbase, and records mastery changes in EverOS.
 - `/api/lesson/complete`: persists completed lesson, quiz attempt, achievement, leaderboard update, and EverOS lesson memory.
@@ -147,7 +147,7 @@ If an API route fails in production, confirm the environment variables are prese
 Run this before deployment:
 
 ```bash
-rg "GEMINI_API_KEY|EVEROS_API_KEY|BUTTERBASE_API_KEY|VITE_|NEXT_PUBLIC_" .
+rg "OPENAI_API_KEY|EVEROS_API_KEY|BUTTERBASE_API_KEY|VITE_|NEXT_PUBLIC_" .
 ```
 
 Private keys should only appear in server route code, README instructions, and `.env.example`, never in client components or bundled public assets.

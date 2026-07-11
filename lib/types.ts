@@ -28,7 +28,7 @@ export type TutorResponse = {
   misconception?: string;
   nextAction: "ask" | "hint" | "complete";
   demoMode: boolean;
-  source?: "gemini" | "fallback";
+  source?: "openai" | "fallback";
   model?: string;
   warning?: string;
   memoryUsed?: boolean;

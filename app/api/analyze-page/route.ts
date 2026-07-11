@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
-import { createPartFromBase64 } from "@google/genai";
-import type { ContentListUnion } from "@google/genai";
 import { demoAnalysis } from "@/lib/demo-data";
-import { hasGemini } from "@/lib/env";
+import { hasOpenAI } from "@/lib/env";
 import { saveScan } from "@/lib/butterbase";
-import { MODEL, generateGeminiJson, googleErrorPayload } from "@/lib/gemini";
+import { MODEL, generateOpenAIJson, openAIErrorPayload } from "@/lib/openai";
 import { analysisSchema } from "@/lib/validators";
 import type { PageAnalysis } from "@/lib/types";
 
@@ -14,7 +12,7 @@ export async function POST(request: Request) {
     const image = formData.get("image");
     const studentId = String(formData.get("studentId") ?? "demo-student");
 
-    if (!hasGemini()) {
+    if (!hasOpenAI()) {
       await saveScan({ studentId, analysis: demoAnalysis, imageName: image instanceof File ? image.name : undefined });
       return NextResponse.json({ ...demoAnalysis, demoMode: true });
     }
@@ -26,21 +24,26 @@ export async function POST(request: Request) {
       "For heart or circulatory content, choose modelId heart."
     ].join(" ");
 
-    const contents: ContentListUnion =
+    const contents =
       image instanceof File
         ? [
-            prompt,
-            createPartFromBase64(
-              Buffer.from(await image.arrayBuffer()).toString("base64"),
-              image.type || "image/png"
-            )
+            {
+              role: "user",
+              content: [
+                { type: "input_text", text: prompt },
+                {
+                  type: "input_image",
+                  image_url: `data:${image.type || "image/png"};base64,${Buffer.from(await image.arrayBuffer()).toString("base64")}`
+                }
+              ]
+            }
           ]
         : prompt;
 
-    const text = await generateGeminiJson(contents);
+    const text = await generateOpenAIJson(contents);
     const parsed = analysisSchema.safeParse(JSON.parse(text));
     if (!parsed.success) {
-      return NextResponse.json({ ...demoAnalysis, demoMode: true, warning: "Invalid Gemini JSON; using demo analysis." });
+      return NextResponse.json({ ...demoAnalysis, demoMode: true, warning: "Invalid OpenAI JSON; using demo analysis." });
     }
 
     const result: PageAnalysis = { ...parsed.data, demoMode: false } as PageAnalysis;
@@ -50,8 +53,8 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ...demoAnalysis,
       demoMode: true,
-      warning: `Gemini analysis failed for ${MODEL}; using demo analysis.`,
-      googleError: googleErrorPayload(error)
+      warning: `OpenAI analysis failed for ${MODEL}; using demo analysis.`,
+      openAIError: openAIErrorPayload(error)
     });
   }
 }

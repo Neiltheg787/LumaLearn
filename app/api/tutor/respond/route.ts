@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { demoMemory } from "@/lib/demo-data";
-import { hasGemini } from "@/lib/env";
-import { retrieveRelevantMemories, memoryContextForGemini } from "@/lib/everos";
-import { MODEL, generateGeminiJson } from "@/lib/gemini";
+import { hasOpenAI } from "@/lib/env";
+import { retrieveRelevantMemories, memoryContextForAI } from "@/lib/everos";
+import { MODEL, generateOpenAIJson } from "@/lib/openai";
 import { tutorSchema } from "@/lib/validators";
 import type { StudentMemory, TutorResponse } from "@/lib/types";
 
@@ -140,7 +140,7 @@ async function retrieveMemoryFast(studentId: string, query: string) {
   ]);
 }
 
-function parseGeminiJson(text: string) {
+function parseProviderJson(text: string) {
   const trimmed = text.trim();
   const unfenced = trimmed.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
   const firstBrace = unfenced.indexOf("{");
@@ -181,20 +181,20 @@ export async function POST(request: Request) {
   } = await request.json().catch(() => ({}));
   const memory = await retrieveMemoryFast(String(studentId), `${topic} ${String(answer)}`);
 
-  if (!hasGemini()) {
-    return fallbackResponse(String(answer), Boolean(hintRequested), String(topic), selectedObject, memory, "Gemini API key is not configured on the server.");
+  if (!hasOpenAI()) {
+    return fallbackResponse(String(answer), Boolean(hintRequested), String(topic), selectedObject, memory, "OpenAI API key is not configured on the server.");
   }
 
   try {
     const prompt = [
-      `You are the live Gemini tutor inside LumaLearn's interactive ${topic} workspace.`,
+      `You are the live AI tutor inside LumaLearn's interactive ${topic} workspace.`,
       "The student is learning through a visual model, not a text-only chat. Never answer generically when lesson context exists.",
       analysis ? `Textbook analysis: ${JSON.stringify(analysis)}` : "",
       selectedObject ? `Currently selected object: ${JSON.stringify(selectedObject)}` : "",
       animationState ? `Current animation/camera state: ${JSON.stringify(animationState)}` : "",
       typeof mastery === "number" ? `Current mastery score: ${mastery}` : "",
       Array.isArray(conversation) ? `Recent conversation: ${JSON.stringify(conversation).slice(0, 3000)}` : "",
-      `Previous learning history from EverOS:\n${memoryContextForGemini(memory)}`,
+      `Previous learning history from EverOS:\n${memoryContextForAI(memory)}`,
       "Personalize the explanation based on the memory, but do not reveal private implementation details.",
       "Reference the selected object and current animation when answering.",
       "If the student asks what to watch, name the path, chamber, ball, flame, or liquid that should be highlighted.",
@@ -206,18 +206,18 @@ export async function POST(request: Request) {
       `Student answer: ${String(answer)}`
     ].join("\n\n");
     const text = await Promise.race([
-      generateGeminiJson(prompt),
-      new Promise<string>((_, reject) => setTimeout(() => reject(new Error("Gemini tutor timed out.")), 8000))
+      generateOpenAIJson(prompt),
+      new Promise<string>((_, reject) => setTimeout(() => reject(new Error("OpenAI tutor timed out.")), 8000))
     ]);
-    const parsed = tutorSchema.safeParse(parseGeminiJson(text));
+    const parsed = tutorSchema.safeParse(parseProviderJson(text));
     if (!parsed.success) {
-      return fallbackResponse(String(answer), Boolean(hintRequested), String(topic), selectedObject, memory, "Gemini returned an unexpected tutor shape.");
+      return fallbackResponse(String(answer), Boolean(hintRequested), String(topic), selectedObject, memory, "OpenAI returned an unexpected tutor shape.");
     }
 
     return NextResponse.json({
       ...parsed.data,
       demoMode: false,
-      source: "gemini",
+      source: "openai",
       model: MODEL,
       memoryUsed: !memory.demoMode,
       memorySummary: memory.recommendedNextLesson
@@ -229,7 +229,7 @@ export async function POST(request: Request) {
       String(topic),
       selectedObject,
       memory,
-      `Gemini is unavailable for ${MODEL}. Check /api/health/gemini for the full Google error.`
+      `OpenAI is unavailable for ${MODEL}. Check /api/health/openai for the full provider error.`
     );
   }
 }
